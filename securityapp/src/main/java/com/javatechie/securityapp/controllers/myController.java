@@ -37,7 +37,7 @@ public class myController {
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public String getByid(@PathVariable int id)
     {
-        return "Only user  allowed here ! \nProduct id - "+id;
+        return "Only user  allowed here ! \nProduct id  - "+id;
     }
 
     @GetMapping("/products/hradmin")
