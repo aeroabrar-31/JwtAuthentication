@@ -1,15 +1,19 @@
 package com.javatechie.securityapp.config;
 
+import com.javatechie.securityapp.filter.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -59,12 +64,17 @@ public class SecurityConfig  {
 
          http.csrf( c->c.disable())
 
-                .authorizeHttpRequests( a-> a.requestMatchers("/api/welcome","/api/adduser").permitAll())
-
+                 .authorizeHttpRequests( a-> a.requestMatchers("/api/welcome","/api/adduser", "/api/generatetoken").permitAll())
 
                 .authorizeHttpRequests( a-> a.requestMatchers("/api/products/**").authenticated())
 
-                 .httpBasic(Customizer.withDefaults());
+                 .sessionManagement(s-> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                 .authenticationProvider(authenticationProvider())
+
+                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+//                 .httpBasic(Customizer.withDefaults());
 
 //                 .formLogin(a->a.permitAll());
 
@@ -110,14 +120,22 @@ public class SecurityConfig  {
     @Autowired
     public UserDetailsService s;
 
+    @Autowired
+    public JwtFilter jwtFilter;
+
     @Bean
-    public AuthenticationProvider get()
+    public AuthenticationProvider authenticationProvider()
     {
          DaoAuthenticationProvider authenticationProvider=new DaoAuthenticationProvider();
          authenticationProvider.setUserDetailsService(s);
          authenticationProvider.setPasswordEncoder(getPswd());
 
          return authenticationProvider;
+    }
+
+    @Bean
+    public AuthenticationManager temp(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 
 
